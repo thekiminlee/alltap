@@ -1,0 +1,60 @@
+{
+  "camera": {
+    "index": 0,
+    "target_fps": 60,
+    "fallback_fps": 30,
+    "width": 1280,
+    "height": 720
+  },
+  "calibration": {
+    "matrix": null,
+    "calibrated_resolution": null,
+    "calibrated_at": null,
+    "averaging_frames": 60,
+    "use_center_validation": true
+  },
+  "gestures": {
+    "activation_zone_threshold": 0.18,
+    "tap_threshold_px": 40,
+    "tap_time_ms": 200,
+    "tap_cooldown_ms": 300,
+    "double_tap_window_ms": 400,
+    "double_tap_position_tolerance_px": 60,
+    "swipe_threshold_px": 120,
+    "swipe_window_frames": 8,
+    "scroll_velocity_threshold": 6.0,
+    "scroll_multiplier": 1.0,
+    "buffer_frames": 30
+  },
+  "cursor": {
+    "smoothing_alpha": 0.4
+  },
+  "keybindings": {
+    "swipe_left": {
+      "macos": ["cmd", "["],
+      "windows": ["alt", "left"]
+    },
+    "swipe_right": {
+      "macos": ["cmd", "]"],
+      "windows": ["alt", "right"]
+    },
+    "swipe_up": {
+      "macos": ["ctrl", "up"],
+      "windows": ["cmd", "tab"]
+    },
+    "swipe_down": {
+      "macos": ["ctrl", "down"],
+      "windows": ["cmd", "d"]
+    },
+    "toggle_pause": {
+      "macos": ["ctrl", "shift", "g"],
+      "windows": ["ctrl", "shift", "g"]
+    }
+  },
+  "app": {
+    "debug_mode": false,
+    "log_level": "INFO",
+    "start_paused": false,
+    "latency_warning_ms": 80
+  }
+}
