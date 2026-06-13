@@ -29,8 +29,22 @@ def test_shared_types_construct():
     hand = Hand(landmarks=landmarks, handedness="Right", confidence=0.9)
 
     assert len(hand.landmarks) == NUM_LANDMARKS
-    assert hand.landmark(INDEX_TIP) is landmarks[INDEX_TIP]
+    assert hand.landmark(INDEX_TIP) == landmarks[INDEX_TIP]
     assert ScreenPoint(x=10, y=20).x == 10
+
+    # pydantic gives us JSON round-tripping and type coercion for free.
+    restored = Hand.model_validate_json(hand.model_dump_json())
+    assert restored == hand
+    assert ScreenPoint(x="10", y=20).x == 10  # coerced to int
+
+
+def test_point_validates_types():
+    from pydantic import ValidationError
+
+    from alltap.types import Point
+
+    with pytest.raises(ValidationError):
+        Point(x="not-a-number", y=0.5)
 
 
 def test_config_loads_and_round_trips(tmp_path):

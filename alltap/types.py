@@ -4,12 +4,19 @@ Keeping these in one place keeps module boundaries clean: the camera produces
 frames, the tracker turns frames into :class:`Hand` objects, the classifier
 consumes :class:`Hand` streams, and calibration maps a normalized :class:`Point`
 to a pixel :class:`ScreenPoint`.
+
+These are :mod:`pydantic` models so we get validation, value-based equality, and
+JSON (de)serialization for free — handy for persisting calibration data and for
+logging/debugging hand frames. For the hot capture path (21 landmarks per hand,
+up to ~60fps), construct trusted MediaPipe output with
+:meth:`pydantic.BaseModel.model_construct`, which skips validation.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 # ---------------------------------------------------------------------------
 # MediaPipe hand-landmark indices.
@@ -29,8 +36,7 @@ PINKY_TIP = 20
 NUM_LANDMARKS = 21
 
 
-@dataclass(frozen=True)
-class Point:
+class Point(BaseModel):
     """A normalized landmark coordinate.
 
     ``x`` and ``y`` are in the range ``[0, 1]`` relative to the frame width and
@@ -39,21 +45,23 @@ class Point:
     because not every consumer needs it.
     """
 
+    model_config = ConfigDict(frozen=True)
+
     x: float
     y: float
     z: Optional[float] = None
 
 
-@dataclass(frozen=True)
-class ScreenPoint:
+class ScreenPoint(BaseModel):
     """An absolute screen coordinate in integer pixels."""
+
+    model_config = ConfigDict(frozen=True)
 
     x: int
     y: int
 
 
-@dataclass
-class Hand:
+class Hand(BaseModel):
     """A single detected hand.
 
     Attributes:
@@ -63,7 +71,7 @@ class Hand:
         confidence: Detection/handedness confidence in ``[0, 1]``.
     """
 
-    landmarks: List[Point] = field(default_factory=list)
+    landmarks: List[Point] = Field(default_factory=list)
     handedness: str = ""
     confidence: float = 0.0
 
