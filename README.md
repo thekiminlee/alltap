@@ -74,7 +74,7 @@ and `app`. (The full schema is finalized in Section 6.)
 
 ```
 alltap/
-  types.py            # shared Point / ScreenPoint / Hand primitives + landmark indices
+  types.py            # shared Point / ScreenPoint / Hand pydantic models + landmark indices
   main.py             # entry point
   utils/
     config.py         # load/merge/validate config, dot-notation access
