@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
 # ---------------------------------------------------------------------------
@@ -78,3 +79,20 @@ class Hand(BaseModel):
     def landmark(self, index: int) -> Point:
         """Return the landmark at ``index`` (use the named constants)."""
         return self.landmarks[index]
+
+
+class CapturedFrame(BaseModel):
+    """One frame grabbed from the camera.
+
+    ``image`` is a raw OpenCV BGR array; ``arbitrary_types_allowed`` lets it
+    live on a pydantic model without per-pixel validation. ``timestamp`` is a
+    :func:`time.perf_counter` reading taken at the moment of capture and is the
+    anchor for the end-to-end latency budget. On the hot capture path build
+    these with :meth:`pydantic.BaseModel.model_construct` to skip validation.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    image: np.ndarray
+    timestamp: float
+    frame_index: int

@@ -8,9 +8,9 @@ use hand tracking to drive tap-to-click, swipe, and two-finger scroll — no tou
 hardware required.
 
 > **Status: early development (v0.1.0).** This is being built section by section.
-> Right now the project scaffold is in place — shared types, configuration, and
-> logging — but the gesture pipeline is not yet wired up. See
-> [Roadmap](#roadmap) for what works today.
+> The scaffold (shared types, configuration, logging) and a resilient camera
+> capture layer are in place; hand tracking and gestures are not yet wired up.
+> See [Roadmap](#roadmap) for what works today.
 
 ---
 
@@ -19,7 +19,7 @@ hardware required.
 | Section | Area | Status |
 | ------- | ---- | ------ |
 | 0 | Project scaffold, config, logging, shared types | ✅ Done |
-| 1 | Camera capture | ⬜ Planned |
+| 1 | Camera capture | ✅ Done |
 | 2 | Hand tracker (MediaPipe) | ⬜ Planned |
 | 3 | Gesture classification (tap / swipe / scroll) | ⬜ Planned |
 | 4 | Debug overlay | ⬜ Planned |
@@ -70,6 +70,30 @@ change; out-of-range values are clamped with a warning on load.
 Sections cover `camera`, `calibration`, `gestures`, `cursor`, `keybindings`,
 and `app`. (The full schema is finalized in Section 6.)
 
+The `camera` block controls capture: `index` (which webcam — changeable at
+runtime), `target_fps` / `fallback_fps`, and `width` / `height`.
+
+## Camera capture
+
+The camera layer yields timestamped frames and tolerates real-hardware quirks —
+fps that can't be honored, a camera index changed at runtime, and mid-session
+unplugs (raised as a typed `CameraDisconnectedError` rather than a crash).
+
+```python
+from alltap.camera import Camera
+
+with Camera() as cam:
+    for frame in cam.frames():
+        # frame.image is a BGR numpy array; frame.timestamp anchors latency
+        print(frame.frame_index, frame.image.shape, cam.measured_fps)
+```
+
+To verify capture on a real webcam:
+
+```bash
+uv run python scripts/check_camera.py
+```
+
 ## Project layout
 
 ```
@@ -79,13 +103,14 @@ alltap/
   utils/
     config.py         # load/merge/validate config, dot-notation access
     logger.py         # rotating file + console logging
-  camera.py           # (Section 1)
+  camera.py           # resilient webcam capture (yields CapturedFrame)
   tracker.py          # (Section 2)
   gestures/           # (Section 3)
   calibration.py      # (Section 5)
   input/              # (Section 7)
   ui/                 # debug overlay + tray (Sections 4, 8)
 config/default_config.json
+scripts/check_camera.py  # manual camera check (real webcam)
 tests/
 ```
 
