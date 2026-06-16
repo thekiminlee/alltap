@@ -21,17 +21,15 @@
     "use_center_validation": true
   },
   "gestures": {
-    "activation_zone_threshold": 0.18,
-    "tap_threshold_px": 40,
-    "tap_time_ms": 200,
+    "activation_zone_threshold": 0.25,
+    "tap_speed_threshold": 1.2,
+    "tap_decel_ratio": 0.4,
+    "tap_time_ms": 250,
     "tap_cooldown_ms": 300,
-    "double_tap_window_ms": 400,
-    "double_tap_position_tolerance_px": 60,
-    "swipe_threshold_px": 120,
-    "swipe_window_frames": 8,
-    "scroll_velocity_threshold": 6.0,
-    "scroll_multiplier": 1.0,
-    "buffer_frames": 30
+    "swipe_decision_ms": 150,
+    "swipe_distance_threshold": 0.08,
+    "scroll_speed_threshold": 0.4,
+    "scroll_multiplier": 1.0
   },
   "cursor": {
     "smoothing_alpha": 0.4

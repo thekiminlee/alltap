@@ -8,9 +8,9 @@ use hand tracking to drive tap-to-click, swipe, and two-finger scroll — no tou
 hardware required.
 
 > **Status: early development (v0.1.0).** This is being built section by section.
-> The scaffold (shared types, configuration, logging), a resilient camera
-> capture layer, and MediaPipe-based hand tracking are in place; gesture
-> recognition is not yet wired up. See [Roadmap](#roadmap) for what works today.
+> The scaffold, camera capture, MediaPipe hand tracking, and gesture
+> classification (tap / swipe / two-finger scroll) are in place; calibration and
+> OS input are not yet wired up. See [Roadmap](#roadmap) for what works today.
 
 ---
 
@@ -21,7 +21,7 @@ hardware required.
 | 0 | Project scaffold, config, logging, shared types | ✅ Done |
 | 1 | Camera capture | ✅ Done |
 | 2 | Hand tracker (MediaPipe) | ✅ Done |
-| 3 | Gesture classification (tap / swipe / scroll) | ⬜ Planned |
+| 3 | Gesture classification (tap / swipe / scroll) | ✅ Done |
 | 4 | Debug overlay | ⬜ Planned |
 | 5 | Calibration (4-corner homography) | ⬜ Planned |
 | 6 | Configuration system (finalized) | ⬜ Planned |
@@ -126,6 +126,38 @@ uv run python scripts/check_tracker.py
 > On Linux, MediaPipe needs system GL libraries (e.g. `libgl1`, `libglesv2`) at
 > runtime. macOS and Windows include these. (The unit tests don't require them.)
 
+## Gesture classification
+
+The classifier turns a *stream* of `Hand` frames into discrete gestures. It is
+pure logic — no camera, model, or OS — and works in normalized coordinates, so a
+single frame is never a gesture; intent emerges from motion over time. Feed it
+the detected hands plus the frame timestamp:
+
+```python
+from alltap.gestures.classifier import GestureClassifier
+
+classifier = GestureClassifier()
+for frame in cam.frames():
+    event = classifier.update(tracker.detect(frame), frame.timestamp)
+    # event.type -> NONE / HOVER / TAP / SWIPE_* / SCROLL_*
+    # event.position -> normalized fingertip (HOVER, TAP); mapped to a pixel later
+```
+
+It models touchscreen semantics:
+
+- **Activation zone** — gestures only fire when the hand is close to the screen
+  (a tight wrist-to-middle-finger distance gate), which keeps stray motion out.
+- **Tap** — the fingertip thrusts in and decelerates sharply (a poke); the
+  location is sampled at the contact point. Two quick taps become an OS
+  double-click — we don't track double-taps ourselves.
+- **Swipe** — a tap immediately followed by a lateral drag (poke-then-drag),
+  decided within a short window after contact.
+- **Scroll** — index + middle extended (ring + pinky folded); their vertical
+  motion scrolls continuously, faster motion = more ticks.
+
+Tap/swipe detection is based on fingertip kinematics (not the wrist), so it works
+regardless of camera tilt. All thresholds live in the `gestures` config block.
+
 ## Project layout
 
 ```
@@ -137,7 +169,11 @@ alltap/
     logger.py         # rotating file + console logging
   camera.py           # resilient webcam capture (yields CapturedFrame)
   tracker.py          # MediaPipe HandLandmarker wrapper (frame -> list[Hand])
-  gestures/           # (Section 3)
+  gestures/           # tap / swipe / scroll classification (pure logic)
+    classifier.py     #   orchestrator: hands + timestamp -> GestureEvent
+    pointer.py        #   tap + swipe state machine
+    scroll.py         #   two-finger scroll
+    events.py         #   GestureType / GestureEvent
   calibration.py      # (Section 5)
   input/              # (Section 7)
   ui/                 # debug overlay + tray (Sections 4, 8)
