@@ -21,13 +21,13 @@
     "use_center_validation": true
   },
   "gestures": {
-    "activation_zone_threshold": 0.25,
+    "activation_zone_threshold": 0.15,
     "tap_speed_threshold": 1.2,
     "tap_decel_ratio": 0.4,
     "tap_time_ms": 250,
     "tap_cooldown_ms": 300,
-    "swipe_decision_ms": 150,
-    "swipe_distance_threshold": 0.08,
+    "drag_decision_ms": 150,
+    "drag_distance_threshold": 0.08,
     "scroll_speed_threshold": 0.4,
     "scroll_multiplier": 1.0
   },

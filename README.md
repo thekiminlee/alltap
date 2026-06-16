@@ -143,20 +143,24 @@ for frame in cam.frames():
     # event.position -> normalized fingertip (HOVER, TAP); mapped to a pixel later
 ```
 
-It models touchscreen semantics:
+It models touchscreen semantics — **every interaction starts with a poke**
+("touch down"), and what follows decides the gesture:
 
-- **Activation zone** — gestures only fire when the hand is close to the screen
-  (a tight wrist-to-middle-finger distance gate), which keeps stray motion out.
-- **Tap** — the fingertip thrusts in and decelerates sharply (a poke); the
-  location is sampled at the contact point. Two quick taps become an OS
+- **Activation zone** — gestures only fire when the hand is close to the screen,
+  gauged by palm size (wrist → middle-finger knuckle, which doesn't change when
+  fingers fold). This keeps stray motion out.
+- **Tap** — a poke (fingertip thrusts in and decelerates sharply) with no drag;
+  the location is sampled at the contact point. Two quick taps become an OS
   double-click — we don't track double-taps ourselves.
-- **Swipe** — a tap immediately followed by a lateral drag (poke-then-drag),
-  decided within a short window after contact.
-- **Scroll** — index + middle extended (ring + pinky folded); their vertical
-  motion scrolls continuously, faster motion = more ticks.
+- **Scroll** — a poke followed by a **one-finger** drag; vertical motion scrolls
+  continuously, faster motion = more ticks.
+- **Swipe** — a poke followed by a **two-finger** drag (middle finger extended);
+  fires one directional event.
 
-Tap/swipe detection is based on fingertip kinematics (not the wrist), so it works
-regardless of camera tilt. All thresholds live in the `gestures` config block.
+Requiring the poke is what separates a deliberate scroll/swipe from plain
+hovering (also single-finger motion). Tap detection is based on fingertip
+kinematics (not the wrist), so it works regardless of camera tilt. All
+thresholds live in the `gestures` config block.
 
 ## Project layout
 
@@ -169,10 +173,10 @@ alltap/
     logger.py         # rotating file + console logging
   camera.py           # resilient webcam capture (yields CapturedFrame)
   tracker.py          # MediaPipe HandLandmarker wrapper (frame -> list[Hand])
-  gestures/           # tap / swipe / scroll classification (pure logic)
+  gestures/           # tap / scroll / swipe classification (pure logic)
     classifier.py     #   orchestrator: hands + timestamp -> GestureEvent
-    pointer.py        #   tap + swipe state machine
-    scroll.py         #   two-finger scroll
+    pointer.py        #   tap / scroll / swipe state machine
+    geometry.py       #   distance helper
     events.py         #   GestureType / GestureEvent
   calibration.py      # (Section 5)
   input/              # (Section 7)

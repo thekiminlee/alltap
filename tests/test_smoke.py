@@ -17,7 +17,6 @@ SCAFFOLD_MODULES = [
     "alltap.gestures.events",
     "alltap.gestures.geometry",
     "alltap.gestures.pointer",
-    "alltap.gestures.scroll",
     "alltap.gestures.classifier",
 ]
 
