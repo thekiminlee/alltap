@@ -8,9 +8,9 @@ use hand tracking to drive tap-to-click, swipe, and two-finger scroll — no tou
 hardware required.
 
 > **Status: early development (v0.1.0).** This is being built section by section.
-> The scaffold (shared types, configuration, logging) and a resilient camera
-> capture layer are in place; hand tracking and gestures are not yet wired up.
-> See [Roadmap](#roadmap) for what works today.
+> The scaffold (shared types, configuration, logging), a resilient camera
+> capture layer, and MediaPipe-based hand tracking are in place; gesture
+> recognition is not yet wired up. See [Roadmap](#roadmap) for what works today.
 
 ---
 
@@ -20,7 +20,7 @@ hardware required.
 | ------- | ---- | ------ |
 | 0 | Project scaffold, config, logging, shared types | ✅ Done |
 | 1 | Camera capture | ✅ Done |
-| 2 | Hand tracker (MediaPipe) | ⬜ Planned |
+| 2 | Hand tracker (MediaPipe) | ✅ Done |
 | 3 | Gesture classification (tap / swipe / scroll) | ⬜ Planned |
 | 4 | Debug overlay | ⬜ Planned |
 | 5 | Calibration (4-corner homography) | ⬜ Planned |
@@ -71,7 +71,10 @@ Sections cover `camera`, `calibration`, `gestures`, `cursor`, `keybindings`,
 and `app`. (The full schema is finalized in Section 6.)
 
 The `camera` block controls capture: `index` (which webcam — changeable at
-runtime), `target_fps` / `fallback_fps`, and `width` / `height`.
+runtime), `target_fps` / `fallback_fps`, and `width` / `height`. The `tracker`
+block controls hand detection: `max_num_hands`, the `min_*_confidence` gates,
+and `mirrored` (set `true` if you run the webcam as a mirror, so handedness
+labels match your real hands).
 
 ## Camera capture
 
@@ -94,6 +97,35 @@ To verify capture on a real webcam:
 uv run python scripts/check_camera.py
 ```
 
+## Hand tracking
+
+The tracker wraps MediaPipe's `HandLandmarker` (Tasks API, VIDEO mode) and turns
+a frame into `Hand` objects — each 21 normalized landmarks plus handedness. We
+do no ML ourselves; MediaPipe supplies the landmarks. The model ships in the
+repo at [`assets/models/hand_landmarker.task`](assets/models/) and is bundled at
+packaging time (no runtime download).
+
+```python
+from alltap.camera import Camera
+from alltap.tracker import HandTracker
+from alltap.types import INDEX_TIP
+
+with Camera() as cam, HandTracker() as tracker:
+    for frame in cam.frames():
+        for hand in tracker.detect(frame):
+            tip = hand.landmark(INDEX_TIP)  # index fingertip, normalized 0..1
+            print(hand.handedness, tip.x, tip.y)
+```
+
+To verify tracking on a real webcam:
+
+```bash
+uv run python scripts/check_tracker.py
+```
+
+> On Linux, MediaPipe needs system GL libraries (e.g. `libgl1`, `libglesv2`) at
+> runtime. macOS and Windows include these. (The unit tests don't require them.)
+
 ## Project layout
 
 ```
@@ -104,13 +136,15 @@ alltap/
     config.py         # load/merge/validate config, dot-notation access
     logger.py         # rotating file + console logging
   camera.py           # resilient webcam capture (yields CapturedFrame)
-  tracker.py          # (Section 2)
+  tracker.py          # MediaPipe HandLandmarker wrapper (frame -> list[Hand])
   gestures/           # (Section 3)
   calibration.py      # (Section 5)
   input/              # (Section 7)
   ui/                 # debug overlay + tray (Sections 4, 8)
+assets/models/hand_landmarker.task  # bundled MediaPipe model
 config/default_config.json
-scripts/check_camera.py  # manual camera check (real webcam)
+scripts/check_camera.py   # manual camera check (real webcam)
+scripts/check_tracker.py  # manual tracker check (real webcam)
 tests/
 ```
 
