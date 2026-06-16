@@ -6,6 +6,13 @@
     "width": 1280,
     "height": 720
   },
+  "tracker": {
+    "max_num_hands": 2,
+    "min_detection_confidence": 0.5,
+    "min_presence_confidence": 0.5,
+    "min_tracking_confidence": 0.5,
+    "mirrored": false
+  },
   "calibration": {
     "matrix": null,
     "calibrated_resolution": null,
